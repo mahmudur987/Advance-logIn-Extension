@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Login Helper</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 5px;
+        width: 320px;
+        box-sizing: border-box;
+      }
+      select,
+      button,
+      input {
+        width: 100%;
+        margin-top: 10px;
+        padding: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+      }
+
+      .uploadFile {
+        cursor: pointer;
+        text-align: center;
+        color: white;
+        background-color: #111;
+        border-radius: 8px;
+        padding: 6px;
+        margin: 6px 0 7px 0;
+        user-select: none;
+      }
+
+      .legend {
+        display: flex;
+        justify-content: end;
+        gap: 20px;
+        align-items: center;
+        margin-top: 8px;
+        padding-right: 10px;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .done {
+        background: #16a34a;
+      } /* green */
+      .todo {
+        background: #ea580c;
+      } /* orange */
+      .muted {
+        background: #9ca3af;
+      } /* gray */
+
+      .board {
+        margin-top: 10px;
+        max-height: 200px;
+        overflow: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 6px;
+        background: #fff;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+        align-items: center;
+        padding: 6px 4px;
+        border-bottom: 1px dashed #eee;
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .badge {
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        cursor: pointer;
+        user-select: none;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+      }
+      .badge.done {
+        background: #dcfce7;
+      }
+      .badge.todo {
+        background: #ffedd5;
+      }
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .soft {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      /* responsive small text for credentials */
+      .cred {
+        font-size: 13px;
+        word-break: break-all;
+      }
+      .houseName {
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hidden local upload input (optional fallback) -->
+    <input
+      id="uploadExcel"
+      type="file"
+      accept=".xlsx,.xls"
+      style="display: none"
+    />
+
+    <h3
+      id="uploadFile"
+      class="uploadFile"
+      title="Click to upload an Excel file (fallback)"
+    >
+      Upload Excel file
+    </h3>
+
+    <p>
+      <strong>Login Id:</strong>
+      <span id="loginId" class="cred"></span>
+    </p>
+    <p>
+      <strong>Password:</strong>
+      <span id="password" class="cred"></span>
+    </p>
+
+    <h3 style="margin-top: 10px; font-size: 12px">Select Account</h3>
+
+    <div class="legend">
+      <span class="dot done" aria-hidden="true"></span>
+      <span style="font-size: 13px">Done</span>
+      <span style="margin-left: 10px"></span>
+      <span class="dot todo" aria-hidden="true"></span>
+      <span style="font-size: 13px">To-do</span>
+    </div>
+
+    <div id="statusBoard" class="board" aria-live="polite"></div>
+
+    <div class="actions">
+      <button id="resetToday" title="Reset today's progress">
+        Reset Today
+      </button>
+      <span id="todayKey" class="soft" style="width: 80%"></span>
+    </div>
+
+    <select id="houseSelect" aria-label="House select"></select>
+    <select id="accountSelect" aria-label="Account type select"></select>
+    <button id="fillLogin">Fill Login</button>
+
+    <!-- SheetJS and your script: make sure these files are in the extension root -->
+    <script src="xlsx.full.min.js"></script>
+    <script type="module" src="/popup.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+  </body>
+</html>
