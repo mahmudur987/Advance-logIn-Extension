@@ -1,0 +1,95 @@
+function displayAccountsOnStatusBoard(accountsData) {
+  const statusBoard = document.getElementById("statusBoard");
+
+  // Clear any existing content
+  statusBoard.innerHTML = "";
+
+  // Check if data exists
+  if (!accountsData || Object.keys(accountsData).length === 0) {
+    statusBoard.textContent = "No account data found.";
+    return;
+  }
+
+  // Iterate over each house name
+  for (const houseName in accountsData) {
+    if (Object.prototype.hasOwnProperty.call(accountsData, houseName)) {
+      const houseEntry = document.createElement("div");
+      houseEntry.className = "house-entry";
+
+      const houseNameElement = document.createElement("div");
+      houseNameElement.className = "house-name";
+      houseNameElement.textContent = houseName;
+      houseEntry.appendChild(houseNameElement);
+
+      const houseAccounts = accountsData[houseName];
+
+      // Iterate over each account type (e.g., Robi PretUps)
+      for (const accountType in houseAccounts) {
+        if (Object.prototype.hasOwnProperty.call(houseAccounts, accountType)) {
+          const account = houseAccounts[accountType];
+
+          const accountInfo = document.createElement("div");
+          accountInfo.className = "account-info";
+
+          const statusClass = account.status === "pending" ? "red" : "green";
+
+          accountInfo.innerHTML = `
+        <p class="account-type"  style="color: ${statusClass}; font-weight: bold;">${accountType}</p>
+          `;
+          houseEntry.appendChild(accountInfo);
+        }
+      }
+
+      statusBoard.appendChild(houseEntry);
+    }
+  }
+}
+
+
+
+// function displayAccountsOnStatusBoard(accountsData) {
+//   const statusBoard = document.getElementById("statusBoard");
+//   statusBoard.innerHTML = "";
+
+//   if (!accountsData || Object.keys(accountsData).length === 0) {
+//     statusBoard.textContent = "No account data found.";
+//     return;
+//   }
+
+//   for (const houseName in accountsData) {
+//     if (Object.prototype.hasOwnProperty.call(accountsData, houseName)) {
+//       const houseEntry = document.createElement("div");
+//       houseEntry.className = "house-entry";
+
+//       const houseNameElement = document.createElement("div");
+//       houseNameElement.className = "house-name";
+//       houseNameElement.textContent = houseName;
+//       houseEntry.appendChild(houseNameElement);
+
+//       const houseAccounts = accountsData[houseName];
+
+//       for (const accountType in houseAccounts) {
+//         if (Object.prototype.hasOwnProperty.call(houseAccounts, accountType)) {
+//           const account = houseAccounts[accountType];
+
+//           const accountInfo = document.createElement("div");
+//           accountInfo.className = "account-info";
+
+//           const statusClass =
+//             account.status === "pending" ? "status-pending" : "status-done";
+
+//           accountInfo.innerHTML = `
+//             ${accountType}:
+//             <span class="${statusClass}">Status: ${account.status}</span>
+//             <br>
+//             ID: ${account.id || "N/A"}
+//             <br>
+//             Password: ${account.password || "N/A"}
+//           `;
+//           houseEntry.appendChild(accountInfo);
+//         }
+//       }
+//       statusBoard.appendChild(houseEntry);
+//     }
+//   }
+// }

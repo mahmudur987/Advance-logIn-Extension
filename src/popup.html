@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+
     <title>Login Helper</title>
     <style>
       body {
@@ -17,10 +18,8 @@
         width: 100%;
         margin-top: 10px;
         padding: 6px;
-        box-sizing: border-box;
         font-size: 14px;
       }
-
       .uploadFile {
         cursor: pointer;
         text-align: center;
@@ -31,12 +30,11 @@
         margin: 6px 0 7px 0;
         user-select: none;
       }
-
       .legend {
         display: flex;
-        justify-content: end;
-        gap: 20px;
+        justify-content: space-between;
         align-items: center;
+        gap: 20px;
         margin-top: 8px;
         padding-right: 10px;
       }
@@ -55,7 +53,6 @@
       .muted {
         background: #9ca3af;
       } /* gray */
-
       .board {
         margin-top: 10px;
         max-height: 200px;
@@ -65,31 +62,32 @@
         padding: 6px;
         background: #fff;
       }
-      .row {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 8px;
+
+      .house-entry {
+        border-bottom: 1px solid #eee;
+        padding: 2px 0;
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        padding: 6px 4px;
-        border-bottom: 1px dashed #eee;
+        font-size: 12px;
       }
-      .row:last-child {
-        border-bottom: 0;
+      .house-entry:last-child {
+        border-bottom: none;
       }
-      .badge {
-        padding: 4px 8px;
-        border-radius: 999px;
-        font-size: 10px;
-        cursor: pointer;
-        user-select: none;
-        border: 1px solid rgba(0, 0, 0, 0.06);
+      .house-name {
+        font-weight: bold;
+        color: #333;
       }
-      .badge.done {
-        background: #dcfce7;
+      .account-info {
+        margin-left: 15px;
       }
-      .badge.todo {
-        background: #ffedd5;
+      .status-pending {
+        color: red;
       }
+      .status-done {
+        color: green;
+      }
+
       .actions {
         display: flex;
         justify-content: space-between;
@@ -138,9 +136,9 @@
       <span id="password" class="cred"></span>
     </p>
 
-    <h3 style="margin-top: 10px; font-size: 12px">Select Account</h3>
-
     <div class="legend">
+      <h3 style="margin-top: 10px; font-size: 12px">Select Account</h3>
+
       <span class="dot done" aria-hidden="true"></span>
       <span style="font-size: 13px">Done</span>
       <span style="margin-left: 10px"></span>
@@ -162,9 +160,10 @@
     <button id="fillLogin">Fill Login</button>
 
     <!-- SheetJS and your script: make sure these files are in the extension root -->
-    <script src="xlsx.full.min.js"></script>
-    <script type="module" src="/popup.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+    <script src="/xlsx.full.min.js"></script>
+    <script src="../firebase/firebase-app-compat.js"></script>
+    <script src="../firebase/firebase-database-compat.js"></script>
+
+    <script src="../dist/popup.js"></script>
   </body>
 </html>
