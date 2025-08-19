@@ -1,4 +1,6 @@
 /* eslint-disable no-undef */
+
+// Firebase Configuration (unchanged)
 const firebaseConfig = {
   apiKey: "AIzaSyBoLIMyfURR-B2pddcKePXsyP2uMUY8Svk",
   authDomain: "advance-login-helper-extension.firebaseapp.com",
@@ -17,12 +19,29 @@ const db = app.database();
 // Global data
 let accountsData = {};
 
-// --- Load from Firebase live ---
+// --- Load data from Firebase live and sort by createdAt ---
 firebase
   .database()
   .ref("houses")
   .on("value", (snapshot) => {
-    accountsData = snapshot.val() || {};
+    const fetchedData = snapshot.val() || {};
+
+    // Convert the object to an array to enable sorting
+    const housesArray = Object.entries(fetchedData);
+
+    // Sort the array based on the 'createdAt' timestamp
+    housesArray.sort(([, a], [, b]) => {
+      const aTime =
+        a["Robi PretUps"]?.createdAt ?? a["Airtel PretUps"]?.createdAt ?? 0;
+      const bTime =
+        b["Robi PretUps"]?.createdAt ?? b["Airtel PretUps"]?.createdAt ?? 0;
+      return aTime - bTime;
+    });
+
+    // Reconstruct the data into the original object format for your app
+    accountsData = Object.fromEntries(housesArray);
+
+    // Call the display functions with the sorted data
     displayAccountsOnStatusBoard(accountsData);
     loadHouses();
   });
@@ -46,9 +65,10 @@ async function refreshData() {
 
     await firebase.database().ref("houses").remove();
 
-    json.forEach((row) => {
+    json.forEach((row, index) => {
       const house = row["DB House Name"];
       if (house) {
+        const timestamp = Date.now() + index;
         firebase
           .database()
           .ref(`houses/${house}/Robi PretUps`)
@@ -56,6 +76,7 @@ async function refreshData() {
             id: row["Robi PretUps Login ID"] || "",
             password: row["Robi PretUps Password"] || "",
             status: "pending",
+            createdAt: timestamp,
           });
         firebase
           .database()
@@ -64,6 +85,7 @@ async function refreshData() {
             id: row["Airtel PretUps Login ID"] || "",
             password: row["Airtel PretUps Password"] || "",
             status: "pending",
+            createdAt: timestamp,
           });
       }
     });
@@ -202,13 +224,11 @@ document.getElementById("fillLogin").addEventListener("click", () => {
           }
           return false;
         };
-
         const usernameFilled = findAndFill(usernameSelectors, id);
-
         if (usernameFilled) {
           setTimeout(() => {
             findAndFill(passwordSelectors, password);
-          }, 200); // Small delay to prevent validation errors
+          }, 200);
         }
       },
     });
@@ -231,38 +251,33 @@ document
   .addEventListener("change", showSelected);
 
 // --- Display status board ---
-
-function displayAccountsOnStatusBoard(accountsData) {
+function displayAccountsOnStatusBoard(data) {
   const statusBoard = document.getElementById("statusBoard");
+  statusBoard.innerHTML = ""; // Clear existing content
 
-  // Clear any existing content
-  statusBoard.innerHTML = "<p>L</p>";
-  statusBoard.textContent = "Loading";
-
-  // Check if data exists
-  if (!accountsData || Object.keys(accountsData).length === 0) {
-    statusBoard.textContent = "No account data found.";
-    return;
-  }
-  statusBoard.textContent = "";
+  // Filter for pending accounts for the display board
   const filteredData = Object.fromEntries(
-    Object.entries(accountsData)
+    Object.entries(data)
       .map(([house, accounts]) => {
         const pendingAccounts = Object.fromEntries(
-          Object.entries(accounts).filter(([accountType, account]) => {
+          Object.entries(accounts).filter(([, account]) => {
             return account.status === "pending";
           })
         );
         return [house, pendingAccounts];
       })
-      .filter(([house, accounts]) => Object.keys(accounts).length > 0)
+      .filter(([, accounts]) => Object.keys(accounts).length > 0)
   );
 
-  console.log(filteredData);
-  accountsData = filteredData;
-  // Iterate over each house name
-  for (const houseName in accountsData) {
-    if (Object.prototype.hasOwnProperty.call(accountsData, houseName)) {
+  // Check if any pending data exists after filtering
+  if (Object.keys(filteredData).length === 0) {
+    statusBoard.textContent = "All accounts have been processed for today.";
+    return;
+  }
+
+  // Iterate over each house name and display only pending accounts
+  for (const houseName in filteredData) {
+    if (Object.prototype.hasOwnProperty.call(filteredData, houseName)) {
       const houseEntry = document.createElement("div");
       houseEntry.className = "house-entry";
 
@@ -271,25 +286,22 @@ function displayAccountsOnStatusBoard(accountsData) {
       houseNameElement.textContent = houseName;
       houseEntry.appendChild(houseNameElement);
 
-      const houseAccounts = accountsData[houseName];
-
-      // Iterate over each account type (e.g., Robi PretUps)
+      const houseAccounts = filteredData[houseName];
       for (const accountType in houseAccounts) {
         if (Object.prototype.hasOwnProperty.call(houseAccounts, accountType)) {
           const account = houseAccounts[accountType];
-
           const accountInfo = document.createElement("div");
           accountInfo.className = "account-info";
-
           const statusClass = account.status === "pending" ? "red" : "green";
 
           accountInfo.innerHTML = `
-        <p class="account-type"  style="color: ${statusClass}; font-weight: bold;">${accountType}</p>
+            <p class="account-type" style="color: ${statusClass}; font-weight: bold;">
+              ${accountType}
+            </p>
           `;
           houseEntry.appendChild(accountInfo);
         }
       }
-
       statusBoard.appendChild(houseEntry);
     }
   }
