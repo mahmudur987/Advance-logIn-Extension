@@ -11,7 +11,7 @@ const firebaseConfig = {
   databaseURL:
     "https://advance-login-helper-extension-default-rtdb.firebaseio.com",
 };
-
+// firebase
 // Initialize Firebase
 const app = firebase.initializeApp(firebaseConfig);
 const db = app.database();
