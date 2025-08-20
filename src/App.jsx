@@ -1,24 +1,40 @@
-import { useState } from "react";
+// App.jsx
+import React from "react";
+import { useChromeStorage } from "./hooks/useChromeStorage";
 import GpManager from "./Gp";
 import RobiAirtel from "./RobiAirtel";
 
 const App = () => {
-  const [view, setView] = useState(true);
+  // persist view in chrome.storage.local so it doesn't reset when popup opens
+  const {
+    value: view,
+    setValue: setView,
+    loaded,
+  } = useChromeStorage("popupViewV1", true);
+
+  // optional: you can still show a tiny loader until storage loads
+  if (!loaded) return <div className="p-3">Loading…</div>;
 
   return (
-    <div>
+    <div className="p-2">
       <button
-        className="bg-red-300 hover:bg-red-500 p-1 rounded-md"
+        className="bg-red-300 hover:bg-red-500 p-1 rounded-md mb-2"
         onClick={() => {
-          alert("Switching to " + (view ? "GP" : "Robi/Airtel") + " view");
-          setView(!view);
+          if (
+            window.confirm(
+              `Are you sure you want to switch to ${
+                view ? "GP" : "Robi/Airtel"
+              }?`
+            )
+          ) {
+            setView(!view);
+          }
         }}
       >
-        Switch
+        Switch to {view ? "GP" : "Robi/Airtel"}
       </button>
-      {view && <RobiAirtel />}
 
-      {!view && <GpManager />}
+      {view ? <RobiAirtel /> : <GpManager />}
     </div>
   );
 };
