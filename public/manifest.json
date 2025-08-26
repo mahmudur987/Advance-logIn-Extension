@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Login Helper (React)",
   "version": "1.0.0",
-  "permissions": ["storage", "scripting", "activeTab", "tabs"],
+  "permissions": ["storage", "scripting", "activeTab", "tabs", "webRequest"],
   "action": {
     "default_popup": "index.html",
     "default_title": "Login Helper",

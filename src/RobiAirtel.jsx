@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useChromeStorage } from "./hooks/useChromeStorage";
 import * as XLSX from "xlsx";
 function areAllAccountsDone(houseData) {
   if (!houseData || !houseData.accounts) return false;
   return houseData.accounts.every((acc) => acc.done === true);
 }
+
 const SHEET_XLSX_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcel_HqXnbFwYeQOdzaIL-fO0sY8a5xY2pKszkHrceYqhy-jPPv91qcvjp0VE6hg/pub?output=xlsx";
 
@@ -28,11 +29,12 @@ export default function RobiAirtel() {
     setValue: setStatus,
     loaded: statusLoaded,
   } = useChromeStorage(STATUS_KEY, { date: todayKey, items: {} });
+  const fileRef = useRef(null);
 
   const [houseIndex, setHouseIndex] = useState(0);
   const [accountIndex, setAccountIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-
+  const [file, setFile] = useState(null);
   // ensure status date is today
   useEffect(() => {
     if (!statusLoaded) return;
@@ -96,6 +98,58 @@ export default function RobiAirtel() {
       };
     next.items[houseName][type] = !next.items[houseName][type];
     setStatus(next);
+  };
+
+  const handleFileUpload = async (e) => {
+    setBusy(true);
+    try {
+      const file = e.target.files[0];
+      if (!file) return new Error("No file selected");
+
+      const reader = new FileReader();
+
+      reader.onload = (evt) => {
+        const ab = evt.target.result;
+        const wb = XLSX.read(ab, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+
+        const rows = XLSX.utils.sheet_to_json(ws, {
+          defval: "",
+          blankrows: false,
+          raw: false,
+        });
+
+        // Example: map to your house/accounts structure
+        const mapped = rows
+          .map((r, i) => {
+            const house = (r["DB House Name"] || "").trim();
+            const robiId = (r["Robi PretUps Login ID"] || "").trim();
+            const robiPw = (r["Robi PretUps Password"] || "").trim();
+            const airtelId = (r["Airtel PretUps Login ID"] || "").trim();
+            const airtelPw = (r["Airtel PretUps Password"] || "").trim();
+            if (!house) return null;
+
+            return {
+              index: i + 1,
+              house,
+              accounts: [
+                { type: "Robi PretUps", id: robiId, password: robiPw },
+                { type: "Airtel PretUps", id: airtelId, password: airtelPw },
+              ],
+            };
+          })
+          .filter(Boolean);
+
+        setAccounts(mapped);
+        console.log("Parsed data:", mapped);
+      };
+
+      reader.readAsArrayBuffer(file);
+    } catch (err) {
+      console.error("Error reading file:", err);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const refreshFromSheet = useCallback(async () => {
@@ -242,12 +296,19 @@ export default function RobiAirtel() {
         <h1 className="text-base font-bold ">
           Login Helper (R +A)
           <span className="text-sm ml-1 block">{todayKey}</span>
+          <input
+            type="file"
+            ref={fileRef}
+            className="hidden"
+            accept=".xlsx, .xls"
+            onChange={handleFileUpload}
+          />
         </h1>
 
         {/* Controls */}
         <div className="flex gap-2">
           <button
-            onClick={refreshFromSheet}
+            onClick={() => fileRef.current.click()}
             disabled={busy}
             className="px-3 py-2 rounded-xl bg-gray-900 text-white text-sm disabled:opacity-50"
           >
@@ -326,8 +387,7 @@ export default function RobiAirtel() {
           })
           .map((a, i) => (
             <option key={i} value={a.id}>
-              {a.type} (
-              <span className="font-bold">{a.done ? "Done" : "Pending"}</span>)
+              {a.type} {a.done ? "Done" : "Pending"}
             </option>
           ))}
       </select>
