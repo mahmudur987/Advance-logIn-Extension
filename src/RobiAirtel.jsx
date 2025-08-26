@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useChromeStorage } from "./hooks/useChromeStorage";
 import * as XLSX from "xlsx";
 function areAllAccountsDone(houseData) {
@@ -34,7 +34,6 @@ export default function RobiAirtel() {
   const [houseIndex, setHouseIndex] = useState(0);
   const [accountIndex, setAccountIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [file, setFile] = useState(null);
   // ensure status date is today
   useEffect(() => {
     if (!statusLoaded) return;
@@ -42,52 +41,53 @@ export default function RobiAirtel() {
       setStatus({ date: todayKey, items: {} });
     }
   }, [statusLoaded, status, setStatus]);
-  const getDone = (houseName, type) =>
-    Boolean(status?.items?.[houseName]?.[type]);
-  const houses =
-    accounts
-      .map((h, i) => {
-        return {
-          ...h,
-          accounts: h.accounts.map((a, j) => {
-            return {
-              ...a,
-              done: getDone(h.house, a.type),
-            };
-          }),
-        };
-      })
-      .sort((a, b) => {
-        const aDoneAll = a.accounts.every((acc) => acc.done);
-        const bDoneAll = b.accounts.every((acc) => acc.done);
+  const getDone = useCallback(
+    (houseName, type) => Boolean(status?.items?.[houseName]?.[type]),
+    [status]
+  );
+  const houses = useMemo(
+    () =>
+      accounts
+        .map((h, i) => {
+          return {
+            ...h,
+            accounts: h.accounts.map((a, j) => {
+              return {
+                ...a,
+                done: getDone(h.house, a.type),
+              };
+            }),
+          };
+        })
+        .sort((a, b) => {
+          const aDoneAll = a.accounts.every((acc) => acc.done);
+          const bDoneAll = b.accounts.every((acc) => acc.done);
 
-        // If a is done and b is not, a goes after b → return 1
-        // If b is done and a is not, b goes after a → return -1
-        // Otherwise keep order → return 0
-        if (aDoneAll && !bDoneAll) return 1;
-        if (!aDoneAll && bDoneAll) return -1;
-        return 0;
-      }) || [];
+          // If a is done and b is not, a goes after b → return 1
+          // If b is done and a is not, b goes after a → return -1
+          // Otherwise keep order → return 0
+          if (aDoneAll && !bDoneAll) return 1;
+          if (!aDoneAll && bDoneAll) return -1;
+          return 0;
+        }) || [],
+    [accounts, getDone]
+  );
   const currentHouse = houses[houseIndex];
   const currentAcc = currentHouse?.accounts.find((x) => x.id === accountIndex);
 
   useEffect(() => {
-    const currentAccountIndex = currentHouse?.accounts.sort((a, b) => {
-      const aDone = a.done;
-      const bDone = b.done;
+    if (currentHouse && currentHouse !== houses[houseIndex - 1]) {
+      const currentAccountIndex = currentHouse?.accounts.sort((a, b) => {
+        const aDone = a.done;
+        const bDone = b.done;
+        if (aDone && !bDone) return 1;
+        if (!aDone && bDone) return -1;
+        return 0;
+      })[0]?.id;
 
-      // If a is done and b is not, a goes after b → return 1
-      // If b is done and a is not, b goes after a → return -1
-      // Otherwise keep order → return 0
-      if (aDone && !bDone) return 1;
-      if (!aDone && bDone) return -1;
-      return 0;
-    })[0]?.id;
-
-    console.log(currentAccountIndex);
-
-    setAccountIndex(currentAccountIndex);
-  }, [currentHouse]);
+      if (currentAccountIndex) setAccountIndex(currentAccountIndex);
+    }
+  }, [currentHouse, houses, houseIndex]);
 
   const toggleDone = (houseName, type) => {
     const next = structuredClone(status || { date: todayKey, items: {} });
@@ -200,6 +200,7 @@ export default function RobiAirtel() {
     } catch (e) {
       console.error(e);
       alert("Refresh failed");
+      fileRef.current.click();
     } finally {
       setBusy(false);
     }
@@ -289,7 +290,7 @@ export default function RobiAirtel() {
       refreshFromSheet();
     }
   }, [accountsLoaded, accounts]);
-
+  console.log(accountIndex, "accountIndex down here");
   return (
     <div className="flex flex-col gap-2 w-[390px] mx-auto p-1 bg-purple-200 ">
       <div className=" text-gray-500 flex justify-between items-center">
@@ -308,7 +309,7 @@ export default function RobiAirtel() {
         {/* Controls */}
         <div className="flex gap-2">
           <button
-            onClick={() => fileRef.current.click()}
+            onClick={refreshFromSheet}
             disabled={busy}
             className="px-3 py-2 rounded-xl bg-gray-900 text-white text-sm disabled:opacity-50"
           >
